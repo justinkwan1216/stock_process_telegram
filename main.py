@@ -49,7 +49,7 @@ peak_difference_max = {}
 peak_difference_min = {}
 bot_difference_max = {}
 bot_difference_min = {}
-tg_reminder = 1000
+tg_reminder = 86400
 
 admin_id = [260780380]
 users = []
@@ -87,33 +87,57 @@ def set_hk(user_id,bot,chat_id,params):
 
         
 def update_nyse(user_id,bot,chat_id,params):
-    if tg_nyse=="0":
-        get_all_tickers.save_all_tickers(market_type="nyse")
-        get_all_tickers.get_data_from_yahoo(market_type="nyse")
-        text = "Updated nyse"
-        bot.sendMessage(chat_id, text)
+    global bot_status
+    if bot_status==0:
+        
+        if tg_nyse=="0":
+            bot_status=1
+            get_all_tickers.save_all_tickers(market_type="nyse")
+            get_all_tickers.get_data_from_yahoo(market_type="nyse")
+            bot_status=0
+            text = "Updated nyse"
+            bot.sendMessage(chat_id, text)
+        else:
+            text = "update on nyse is disabled"
+            bot.sendMessage(chat_id, text)
     else:
-        text = "update on nyse is disabled"
+        text = "bot is down"
         bot.sendMessage(chat_id, text)
         
 def update_nasdaq(user_id,bot,chat_id,params):
-    if tg_nasdaq=="0":
-        get_all_tickers.save_all_tickers(market_type="nasdaq")
-        get_all_tickers.get_data_from_yahoo(market_type="nasdaq")
-        text = "Updated nasdaq"
-        bot.sendMessage(chat_id, text)
+    global bot_status
+    if bot_status==0:
+        
+        if tg_nasdaq=="0":
+            bot_status=1
+            get_all_tickers.save_all_tickers(market_type="nasdaq")
+            get_all_tickers.get_data_from_yahoo(market_type="nasdaq")
+            bot_status=0
+            text = "Updated nasdaq"
+            bot.sendMessage(chat_id, text)
+        else:
+            text = "update on nasdaq is disabled"
+            bot.sendMessage(chat_id, text)
     else:
-        text = "update on nasdaq is disabled"
+        text = "bot is down"
         bot.sendMessage(chat_id, text)
 
 def update_hk(user_id,bot,chat_id,params):
-    if tg_hk=="0":
-        get_all_tickers.save_all_tickers(market_type="hk")
-        get_all_tickers.get_data_from_yahoo(market_type="hk")
-        text = "Updated hk"
-        bot.sendMessage(chat_id, text)
+    global bot_status
+    if bot_status==0:
+        
+        if tg_hk=="0":
+            bot_status=1
+            get_all_tickers.save_all_tickers(market_type="hk")
+            get_all_tickers.get_data_from_yahoo(market_type="hk")
+            bot_status=0
+            text = "Updated hk"
+            bot.sendMessage(chat_id, text)
+        else:
+            text = "update on hk is disabled"
+            bot.sendMessage(chat_id, text)
     else:
-        text = "update on hk is disabled"
+        text = "bot is down"
         bot.sendMessage(chat_id, text)
 
 
@@ -133,8 +157,9 @@ def update_excel(user_id,bot,chat_id,params):
             update_hk(user_id,bot,chat_id,params)
             bot.sendMessage(chat_id, text)
         else:
-            text = "bot is down"
+            text = "update on hk is disabled"
             bot.sendMessage(chat_id, text)
+
     else:
         text = "You are not admin"
         bot.sendMessage(chat_id, text)
@@ -670,7 +695,7 @@ tg_commands_description = {"help":"<usage: /help >","/display_userid":"<usage: /
                            "/set_bot_difference_max":"<usage: /set_bot_difference_max (thres) >","/set_bot_difference_min":"<usage: /set_bot_difference_min (thres) >",\
                            "/process_nyse":"<usage: /process_nyse >","/process_nasdaq":"<usage: /process_nasdaq >","/process_hk":"<usage: /process_hk >",\
                            "/set_nyse":"<usage: /set_nyse (0 is true/other) >","/set_nasdaq":"<usage: /set_nasdaq (0 is true/other) >",\
-                           "/set_nyse_threshold":"<usage: /set_nyse_threshold (thres) >","/set_nasdaq_threshold":"<usage: /set_nasdaq_threshold (thres) >","/set_hk_threshold":"<usage: /set_hk_threshold (thres) >"
+                           "/set_nyse_threshold":"<usage: /set_nyse_threshold (thres) >","/set_nasdaq_threshold":"<usage: /set_nasdaq_threshold (thres) >","/set_hk_threshold":"<usage: /set_hk_threshold (thres) >",\
                            "/update_excel":"<usage: /update_excel >","/display_userid":"<usage: /display_userid >"
                            
                            }
@@ -714,6 +739,7 @@ def handle(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     jobs = sched.get_jobs()
 
+
     if len(jobs)<=5:
 
         if content_type == "text":
@@ -742,6 +768,3 @@ MessageLoop(bot, handle).run_as_thread()
 print("I'm listening...")
 
 
-while(1):
-    
-    time.sleep(0.01)
