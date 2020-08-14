@@ -31,7 +31,7 @@ sched = BackgroundScheduler()
 
 
 sched.start()
-bot = telepot.Bot('1125134505:AAFBAIJoAQ486mNDEe3wLhDKk9qvvAyL9n0')
+bot = telepot.Bot('1012652677:AAEV0fCEB3FeIeQGOTrzGIOF2QRNPw4y3WQ')
 print(bot.getMe())
 
 bot_status=0
