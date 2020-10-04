@@ -1,0 +1,36 @@
+教教大家點用 一次只可打一個command,一開始打/start
+港股format(e.g. 0282.HK,0001.HK)
+ATR_2 = 14日Average true range 既 true range
+peak_difference = cycle 既第一個最高點  同今日相差之交易日距離
+bot_difference = cycle 既第一個最低點 同今日相差之交易日距離
+current_price = 股票現在價
+最高點 = 7日內最高(無得set,fix死7日)
+最低點 = 7日內最低(無得set,fix死7日)
+
+功能1
+1. e.g. /set_nyse_threshold 0.9 設置 ATR_2 個threshold=0.9
+2. /process_nyse 會generate個csv,入面ATR_2細過0.9既股票 signal 個欄 SET 成 T(TRUE)
+3. /get_nyse_file download 番個csv
+
+功能2
+1. e.g. /set_ATR_2_max 0.9, /set_ATR_2_min 0.2, /set_peak_difference_max 100, 
+/set_peak_difference_min 10,/set_bot_difference_max 90,/set_bot_difference_in 20,/set_current_price_max 10,/set_current_price_min 0
+就會將個8個threshold 分別set到0.9, 0.2, 100, 10, 90, 20, 10, 0
+(optional : 打 /get_user_para 睇番8個threshold同功能1 既3個threshold)
+2. /scrape_nyse 會用上面個8個threshold generate 一個csv有哂所有符合以上range既股票
+3. /get_nyse_scrape_file download 番個csv
+
+功能3
+1. e.g. /low_open baba 1y 1wk 0.05 0.8
+搵阿里巴巴最近1年, 用1周去睇所有 (開市價-最低價)/開市價 趺幾多%
+搵出 趺0.05(5%)係所有既top 幾多% 同埋 top 80%既係趺幾多%
+最後有埋個csv, 會用 趺percent 由最高到最低sort
+rank: 0.8518518518518519
+short_percent: -0.04347497107157901
+所以 趺5%係所有既係top 85.185% 而top 80%係趺4.347%
+(0.05, 0.85185)係一個pair
+(0.04347, 0.8)又係一個pair
+
+2. e.g. /high_open baba 1y 1wk 0.05 0.8
+同上但係相反係升 唔係趺
+->(最高價-開市價)/開市價

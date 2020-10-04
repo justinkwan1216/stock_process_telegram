@@ -20,10 +20,10 @@ def save_all_tickers(market_type="nyse"):
         pickle.dump(tickers, f)
     return tickers
 
-save_all_tickers()
+#save_all_tickers()
 # save_sp500_tickers()
 
-def get_data_from_yahoo(market_type="nyse",reload=False):
+def get_data_from_yahoo(market_type="nyse",reload=False, rewrite=True):
     
     if reload:
         tickers = save_all_tickers()
@@ -43,7 +43,7 @@ def get_data_from_yahoo(market_type="nyse",reload=False):
             ticker = ticker.replace(".","-")
         #print(ticker)
         # just in case your connection breaks, we'd like to save our progress!
-        if not os.path.exists("stock_"+market_type+"/{}.csv".format(ticker)):
+        if not os.path.exists("stock_"+market_type+"/{}.csv".format(ticker)) or rewrite:
             try:
                 #df = web.DataReader(ticker, 'yahoo', start, end)
                 #iex-tops econdb
@@ -73,7 +73,7 @@ def get_data_from_yahoo(market_type="nyse",reload=False):
             print('Already have {}'.format(ticker))
 
 
-get_data_from_yahoo()
+#get_data_from_yahoo()
 def compile_data(market_type="nyse"):
     with open(market_type+"tickers.pickle", "rb") as f:
         tickers = pickle.load(f)

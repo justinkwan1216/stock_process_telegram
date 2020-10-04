@@ -26,12 +26,12 @@ import numpy as np
 import pandas_datareader.data as web
 import get_all_tickers
 import process_df
+import scrape_ticker
 sched = BackgroundScheduler()
 
 
-
 sched.start()
-bot = telepot.Bot('1012652677:AAEV0fCEB3FeIeQGOTrzGIOF2QRNPw4y3WQ')
+bot = telepot.Bot('1348245537:AAFN8WJ2XSjjBk-19wEVdv61Ymcs9rqTIQ4')
 print(bot.getMe())
 
 bot_status=0
@@ -54,10 +54,58 @@ tg_reminder = 86400
 admin_id = [260780380]
 users = []
 #----------------user_command------
+def low_open(user_id,bot,chat_id,params):
+    if bot_status>=0:
+        text=""
+        try:
+            ticker=params[0]            
+            period=params[1]
+            interval=params[2]
+            short_percent=float(params[3])
+            rank=float(params[4])
+            
+            za,p,df = scrape_ticker.low_open(str(user_id),ticker,period,interval,short_percent,rank)
+            df.to_csv(str(user_id)+"/{}_low-open.csv".format(ticker))
+            send_file(chat_id,str(user_id)+"/{}_low-open.csv".format(ticker))
+            #send_file(chat_id,str(user_id)+"/low-open_ax_figure.png")
+            #send_file(chat_id,str(user_id)+"/low-open_ax2_figure.png")
+            text += "rank: "+str(za)+"\nshort_percent: "+str(p)
+        except:
+            text += "Invalid input\nFormat: /low_open <ticker> <period> <interval> <short_percent> <rank>"
+            text += "\ne.g. /low_open AAPL 5y 1wk 0.045 0.9"
+    else:
+        text="bot is down"
+
+    bot.sendMessage(chat_id, text)
+def high_open(user_id,bot,chat_id,params):
+    if bot_status>=0:
+        text=""
+        try:
+            ticker=params[0]            
+            period=params[1]
+            interval=params[2]
+            long_percent=float(params[3])
+            rank=float(params[4])
+            
+            za,p,df = scrape_ticker.high_open(str(user_id),ticker,period,interval,long_percent,rank)
+            df.to_csv(str(user_id)+"/{}_high-open.csv".format(ticker))
+            send_file(chat_id,str(user_id)+"/{}_high-open.csv".format(ticker))
+            #send_file(chat_id,str(user_id)+"/high-open_ax_figure.png")
+            #send_file(chat_id,str(user_id)+"/high-open_ax2_figure.png")
+            text += "rank: "+str(za)+"\nlong_percent: "+str(p)
+        except:
+            text += "Invalid input\nFormat: /high_open <ticker> <period> <interval> <long_percent> <rank>"
+            text += "\ne.g. /high_open AAPL 5y 1wk 0.045 0.9"
+    else:
+        text="bot is down"
+
+    bot.sendMessage(chat_id, text)
+    
 def set_nyse(user_id,bot,chat_id,params):
     global admin_id
+    global tg_nyse
     if user_id in admin_id:
-        tg_nyse = parmas[0]
+        tg_nyse = params[0]
         text = "Set nyse to "+tg_nyse
         bot.sendMessage(chat_id, text)
     else:
@@ -67,8 +115,9 @@ def set_nyse(user_id,bot,chat_id,params):
 
 def set_nasdaq(user_id,bot,chat_id,params):
     global admin_id
+    global tg_nasdaq
     if user_id in admin_id:
-        tg_nasdaq = parmas[0]
+        tg_nasdaq = params[0]
         text = "Set nasdaq to "+tg_nasdaq
         bot.sendMessage(chat_id, text)
     else:
@@ -77,8 +126,9 @@ def set_nasdaq(user_id,bot,chat_id,params):
 
 def set_hk(user_id,bot,chat_id,params):
     global admin_id
+    global tg_hk
     if user_id in admin_id:
-        tg_hk = parmas[0]
+        tg_hk = params[0]
         text = "Set hk to "+tg_hk
         bot.sendMessage(chat_id, text)
     else:
@@ -88,10 +138,10 @@ def set_hk(user_id,bot,chat_id,params):
         
 def update_nyse(user_id,bot,chat_id,params):
     global bot_status
-    if bot_status==0:
+    if bot_status>=0:
         
         if tg_nyse=="0":
-            bot_status=1
+            bot_status=-1
             get_all_tickers.save_all_tickers(market_type="nyse")
             get_all_tickers.get_data_from_yahoo(market_type="nyse")
             bot_status=0
@@ -106,10 +156,10 @@ def update_nyse(user_id,bot,chat_id,params):
         
 def update_nasdaq(user_id,bot,chat_id,params):
     global bot_status
-    if bot_status==0:
+    if bot_status>=0:
         
         if tg_nasdaq=="0":
-            bot_status=1
+            bot_status=-1
             get_all_tickers.save_all_tickers(market_type="nasdaq")
             get_all_tickers.get_data_from_yahoo(market_type="nasdaq")
             bot_status=0
@@ -124,10 +174,10 @@ def update_nasdaq(user_id,bot,chat_id,params):
 
 def update_hk(user_id,bot,chat_id,params):
     global bot_status
-    if bot_status==0:
+    if bot_status>=0:
         
         if tg_hk=="0":
-            bot_status=1
+            bot_status=-1
             get_all_tickers.save_all_tickers(market_type="hk")
             get_all_tickers.get_data_from_yahoo(market_type="hk")
             bot_status=0
@@ -144,20 +194,20 @@ def update_hk(user_id,bot,chat_id,params):
 def update_excel(user_id,bot,chat_id,params):
     global admin_id
     if user_id in admin_id:
-        if bot_status==0:
+        if bot_status>=0:
             text = "Updating nyse"
-            update_nyse(user_id,bot,chat_id,params)
             bot.sendMessage(chat_id, text)
+            update_nyse(user_id,bot,chat_id,params)
 
             text = "Updating nasdaq"
-            update_nasdaq(user_id,bot,chat_id,params)
             bot.sendMessage(chat_id, text)
+            update_nasdaq(user_id,bot,chat_id,params)
 
             text = "Updating hk"
-            update_hk(user_id,bot,chat_id,params)
             bot.sendMessage(chat_id, text)
+            update_hk(user_id,bot,chat_id,params)
         else:
-            text = "update on hk is disabled"
+            text = "bot is down"
             bot.sendMessage(chat_id, text)
 
     else:
@@ -278,7 +328,7 @@ def set_hk_threshold(user_id,bot,chat_id,params):
 
    
 def process_nyse(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         threshold = nyse_threshold[chat_id]
         text = "processing nyse"
         bot.sendMessage(chat_id, text)
@@ -290,7 +340,7 @@ def process_nyse(user_id,bot,chat_id,params):
         bot.sendMessage(chat_id, text)
 
 def process_nasdaq(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         threshold = nasdaq_threshold[chat_id]
         text = "processing nasdaq"
         bot.sendMessage(chat_id, text)
@@ -302,7 +352,7 @@ def process_nasdaq(user_id,bot,chat_id,params):
         bot.sendMessage(chat_id, text)
 
 def process_hk(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         threshold = hk_threshold[chat_id]
         text = "processing hk"
         bot.sendMessage(chat_id, text)
@@ -314,7 +364,7 @@ def process_hk(user_id,bot,chat_id,params):
         bot.sendMessage(chat_id, text)
         
 def scrape_nyse(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         p1=current_price_max[chat_id]
         p2=current_price_min[chat_id]
         p3=ATR_2_max[chat_id]
@@ -339,7 +389,7 @@ def scrape_nyse(user_id,bot,chat_id,params):
 
 def scrape_nasdaq(user_id,bot,chat_id,params):
 
-    if bot_status==0:
+    if bot_status>=0:
         p1=current_price_max[chat_id]
         p2=current_price_min[chat_id]
         p3=ATR_2_max[chat_id]
@@ -365,7 +415,7 @@ def scrape_nasdaq(user_id,bot,chat_id,params):
 
 def scrape_hk(user_id,bot,chat_id,params):
 
-    if bot_status==0:
+    if bot_status>=0:
         p1=current_price_max[chat_id]
         p2=current_price_min[chat_id]
         p3=ATR_2_max[chat_id]
@@ -391,7 +441,15 @@ def scrape_hk(user_id,bot,chat_id,params):
 
 def get_user_para(user_id,bot,chat_id,params):
     text=""
-    if bot_status==0:
+    if bot_status>=0:
+
+        nyse=nyse_threshold[chat_id]
+        text+="nyse_threshold: "+str(nyse)+"\n"
+        nasdaq=nasdaq_threshold[chat_id]
+        text+="nasdaq_threshold: "+str(nasdaq)+"\n"
+        hk=hk_threshold[chat_id]
+        text+="hk_threshold: "+str(hk)+"\n"
+
         p1=current_price_max[chat_id]
         text+="current_price_max: "+str(p1)+"\n"
         p2=current_price_min[chat_id]
@@ -415,7 +473,7 @@ def get_user_para(user_id,bot,chat_id,params):
     
 
 def get_nyse_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/nyse_all.csv")
         except:
@@ -426,7 +484,7 @@ def get_nyse_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)
         
 def get_nasdaq_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/nasdaq_all.csv")
         except:
@@ -437,9 +495,10 @@ def get_nasdaq_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)
 
 def get_hk_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/hk_all.csv")
+            text="file sent"
         except:
             text = "file not founded\nuse command /process_hk first"
         
@@ -448,7 +507,7 @@ def get_hk_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)
 
 def get_nyse_scrape_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/nyse_scraped.csv")
             text="file sent"
@@ -460,7 +519,7 @@ def get_nyse_scrape_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)
 
 def get_nasdaq_scrape_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/nasdaq_scraped.csv")
             text="file sent"
@@ -472,7 +531,7 @@ def get_nasdaq_scrape_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)
 
 def get_hk_scrape_file(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         try:
             send_file(chat_id,str(user_id)+"/hk_scraped.csv")
             text="file sent"
@@ -484,7 +543,7 @@ def get_hk_scrape_file(user_id,bot,chat_id,params):
     bot.sendMessage(chat_id, text)   
         
 def display_userid(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         text = "Your user id: "+str(user_id)
         bot.sendMessage(chat_id, text)
     else:
@@ -492,7 +551,7 @@ def display_userid(user_id,bot,chat_id,params):
         bot.sendMessage(chat_id, text)
     
 def display_cmd(user_id,bot,chat_id,params):
-    if bot_status==0:
+    if bot_status>=0:
         global admin_id
         text="Listed are all command available\n"
         for key, value in tg_commands_description.items() :
@@ -507,31 +566,31 @@ def display_cmd(user_id,bot,chat_id,params):
         bot.sendMessage(chat_id, text)
     
 def start(user_id,bot,chat_id,params):
-    if bot_status==0:
-        global users
-        text=""
-        if user_id not in users:
-            users.append(user_id)
-            text+="Welcome new user\nYou can type in /help to display all commands\n"
-            nyse_threshold[chat_id] = 0.0025
-            nasdaq_threshold[chat_id] = 0.0025
-            current_price_max[chat_id] = 1
-            current_price_min[chat_id] = 0
-            ATR_2_max[chat_id] = 0.0025
-            ATR_2_min[chat_id] = 0
-            peak_difference_max[chat_id] = 1000
-            peak_difference_min[chat_id] = 0
-            bot_difference_max[chat_id] = 1000
-            bot_difference_min[chat_id] = 0
-            display_cmd(user_id,bot,chat_id,params)
-        else:
-            text+="You are already using this bot"
-
-
-        bot.sendMessage(chat_id, text)
+    global users
+    text=""
+    if user_id not in users:
+        users.append(user_id)
+        text+="Welcome new user\nYou can type in /help to display all commands\n"
+        if not os.path.exists(str(user_id)):
+            os.makedirs(str(user_id))
+        nyse_threshold[chat_id] = 0.0025
+        nasdaq_threshold[chat_id] = 0.0025
+        hk_threshold[chat_id] = 0.0025
+        current_price_max[chat_id] = 1
+        current_price_min[chat_id] = 0
+        ATR_2_max[chat_id] = 0.0025
+        ATR_2_min[chat_id] = 0
+        peak_difference_max[chat_id] = 1000
+        peak_difference_min[chat_id] = 0
+        bot_difference_max[chat_id] = 1000
+        bot_difference_min[chat_id] = 0
+        display_cmd(user_id,bot,chat_id,params)
     else:
-        text = "bot is down"
-        bot.sendMessage(chat_id, text)
+        text+="You are already using this bot"
+
+
+    bot.sendMessage(chat_id, text)
+
 
     
 
@@ -563,8 +622,10 @@ def save_all_para(user_id,bot,chat_id,params):
     global users
     global tg_nyse
     global tg_nasdaq
+    global tg_hk
     global nyse_threshold
     global nasdaq_threshold
+    global hk_threshold
     global current_price_max
     global current_price_min
     global ATR_2_max
@@ -578,7 +639,7 @@ def save_all_para(user_id,bot,chat_id,params):
     if user_id in admin_id:
         f = open('save.pickle', 'wb')
         
-        pickle.dump((tg_reminder,users,admin_id,bot_status,tg_nyse,tg_nasdaq,nyse_threshold,nasdaq_threshold,current_price_max,\
+        pickle.dump((tg_reminder,users,admin_id,bot_status,tg_nyse,tg_nasdaq,tg_hk,nyse_threshold,nasdaq_threshold,hk_threshold,current_price_max,\
                      current_price_min,ATR_2_max,ATR_2_min,peak_difference_max,peak_difference_min,bot_difference_max,bot_difference_min), f)
         f.close()
         text += "Saved all paramaters"
@@ -593,8 +654,10 @@ def load_all_para(user_id,bot,chat_id,params):
     global users
     global tg_nyse
     global tg_nasdaq
+    global tg_hk
     global nyse_threshold
     global nasdaq_threshold
+    global hk_threshold
     global current_price_max
     global current_price_min
     global ATR_2_max
@@ -608,7 +671,7 @@ def load_all_para(user_id,bot,chat_id,params):
     if user_id in admin_id:
         f = open('save.pickle', 'rb')
 
-        tg_reminder,users,admin_id,bot_status,tg_nyse,tg_nasdaq,nyse_threshold,nasdaq_threshold,current_price_max,\
+        tg_reminder,users,admin_id,bot_status,tg_nyse,tg_nasdaq,tg_hk,nyse_threshold,nasdaq_threshold,hk_threshold,current_price_max,\
                      current_price_min,ATR_2_max,ATR_2_min,peak_difference_max,peak_difference_min,bot_difference_max,bot_difference_min = pickle.load(f)
         f.close()
         text += "Loaded all paramaters"
@@ -628,20 +691,28 @@ def list_job(user_id,bot,chat_id,params):
 def set_bot_status(user_id,bot,chat_id,params):
     global bot_status
     text=""
-    try:
-        params = params[0]
-        params = int(params)
-        if user_id in admin_id:
-            bot_status=params
+    if user_id in admin_id:
+        try:
+            params = params[0]
+            params = int(params)
+            text += "bot status set to "+str(params)
+        except:
+            text += "bot status not integer"
+        bot_status=params
+
+        try:
             if bot_status !=0:
                 sched.shutdown()
             else:
                 sched.start()
-            text += "bot status set to "+str(params)
-        else:
-            text += "You are not admin"
-    except:
-        text += "bot status not integer"
+        except Exception as e:
+             text += "\n"+str(e)
+        
+    else:
+        text += "You are not admin"
+
+
+
     bot.sendMessage(chat_id, text)
         
 def some_job(user_id,bot,chat_id,params):
@@ -677,8 +748,8 @@ def reminder(user_id,bot,chat_id,params):
     except Exception as e:
         print(e)
 
-tg_commands = {"/start":start,"/help":display_cmd,"/reminder":reminder,"/delete_reminder":delete_reminder,"/scrape_nyse":scrape_nyse,"/scrape_nasdaq":scrape_nasdaq,"/scrape_hk":scrape_hk,\
-               "/get_user_para":get_user_para,"/get_nyse_file":get_nyse_file,\
+tg_commands = {"/start":start,"/help":display_cmd,"/reminder":reminder,"/delete_reminder":delete_reminder,"/high_open":high_open,"/low_open":low_open,"/scrape_nyse":scrape_nyse,\
+               "/scrape_nasdaq":scrape_nasdaq,"/scrape_hk":scrape_hk,"/get_user_para":get_user_para,"/get_nyse_file":get_nyse_file,\
                "/get_nasdaq_file":get_nasdaq_file,"/get_hk_file":get_hk_file,"/get_nyse_scrape_file":get_nyse_scrape_file,"/get_nasdaq_scrape_file":get_nasdaq_scrape_file,"/get_hk_scrape_file":get_hk_scrape_file,\
                "/set_current_price_max":set_current_price_max,"/set_current_price_min":set_current_price_min,"/set_ATR_2_max":set_ATR_2_max,"/set_ATR_2_min":set_ATR_2_min,"/set_peak_difference_max":set_peak_difference_max,\
                "/set_peak_difference_min":set_peak_difference_min,"/set_bot_difference_max":set_bot_difference_max,"/set_bot_difference_min":set_bot_difference_min,"/process_nyse":process_nyse,\
@@ -686,6 +757,7 @@ tg_commands = {"/start":start,"/help":display_cmd,"/reminder":reminder,"/delete_
                "/update_excel":update_excel,"/display_userid":display_userid,"/save_all_para":save_all_para,"/load_all_para":load_all_para,\
                "/add_admin":add_admin,"/list_job":list_job,"/set_bot_status":set_bot_status}
 tg_commands_description = {"help":"<usage: /help >","/display_userid":"<usage: /display_userid >","/reminder":"<usage: /reminder (time in seconds) >","/delete_reminder":"<usage: /delete_reminder >",\
+                           "/open_close": "<usage: /open_close (ticker) (period) (interval) (short_percent) (rank) >",\
                            "/scrape_nyse":"<usage: /scrape_nyse >","/scrape_nasdaq":"<usage: /scrape_nasdaq >","/scrape_hk":"<usage: /scrape_hk >","/get_user_para":"<usage: /get_user_para >",\
                            "/get_nyse_file":"<usage: /get_nyse_file >","/get_nasdaq_file":"<usage: /get_nasdaq_file >","/get_hk_file":"<usage: /get_hk_file >",\
                            "/get_nyse_scrape_file":"<usage: /get_nyse_scrape_file >","/get_nasdaq_scrape_file":"<usage: /get_nasdaq_scrape_file >","/get_hk_scrape_file":"<usage: /get_hk_scrape_file >",\
@@ -694,10 +766,11 @@ tg_commands_description = {"help":"<usage: /help >","/display_userid":"<usage: /
                            "/set_peak_difference_max":"<usage: /set_peak_difference_max (thres) >","/set_peak_difference_min":"<usage: /set_peak_difference_min (thres) >",\
                            "/set_bot_difference_max":"<usage: /set_bot_difference_max (thres) >","/set_bot_difference_min":"<usage: /set_bot_difference_min (thres) >",\
                            "/process_nyse":"<usage: /process_nyse >","/process_nasdaq":"<usage: /process_nasdaq >","/process_hk":"<usage: /process_hk >",\
-                           "/set_nyse":"<usage: /set_nyse (0 is true/other) >","/set_nasdaq":"<usage: /set_nasdaq (0 is true/other) >",\
+                           "/set_nyse":"<usage: /set_nyse (0 is true/other) >","/set_nasdaq":"<usage: /set_nasdaq (0 is true/other) >","/set_hk":"<usage: /set_hk (0 is true/other) >",\
                            "/set_nyse_threshold":"<usage: /set_nyse_threshold (thres) >","/set_nasdaq_threshold":"<usage: /set_nasdaq_threshold (thres) >","/set_hk_threshold":"<usage: /set_hk_threshold (thres) >",\
-                           "/update_excel":"<usage: /update_excel >","/display_userid":"<usage: /display_userid >"
-                           
+                           "/update_excel":"<usage: /update_excel >","/display_userid":"<usage: /display_userid >",\
+                           "/high_open":"<usage: /high_open (ticker) (period) (interval) (long_percent) (rank) >",\
+                           "/low_open":"<usage: /low_open (ticker) (period) (interval) (long_percent) (rank) >" 
                            }
 tg_admin_commands_description = {"/save_all_para":"<usage: /save_all_para >","/load_all_para":"<usage: /load_all_para >","/add_admin":"<usage: /add_admin (admin_id)>",\
                                  "/list_job":"<usage: /list_job >","/set_bot_status":"<usage: /set_bot_status (status)>"}
@@ -730,20 +803,16 @@ def remove_command(cmd):
 #----------------------------
         
 
-
-
 def handle(msg):
     
     global bot
     
     content_type, chat_type, chat_id = telepot.glance(msg)
     jobs = sched.get_jobs()
-
-
-    if len(jobs)<=5:
-
+    user_id = msg['from']['id']
+    global admin_id
+    if len(jobs)<=5 or (user_id in admin_id):
         if content_type == "text":
-            user_id = msg['from']['id']
             msg_text = msg['text']
             chat_id = msg['chat']['id']
             msg_id = msg['message_id']
@@ -762,9 +831,12 @@ def handle(msg):
 
     else:
         bot.sendMessage(chat_id, "Bot is very busy")
+        list_job(user_id,bot,chat_id,params)
    
 
 MessageLoop(bot, handle).run_as_thread()
 print("I'm listening...")
 
-
+while(1):
+    
+    time.sleep(0.01)
